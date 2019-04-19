@@ -1,0 +1,24 @@
+[[source]]
+name = "pypi"
+url = "https://pypi.org/simple"
+verify_ssl = true
+
+[scripts]
+serve = "uvicorn guid:app --reload"
+
+[dev-packages]
+pylint = "*"
+autopep8 = "*"
+rope = "*"
+
+[packages]
+starlette = "*"
+uvicorn = "*"
+fastapi = "*"
+redis = "*"
+aiosqlite = "*"
+databases = "*"
+alembic = "*"
+
+[requires]
+python_version = "3.7"
