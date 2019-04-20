@@ -16,7 +16,7 @@ class GuidIn(BaseModel):
         return v
 
 
-class GuidUpdateIn(BaseModel):
+class GuidUpdate(BaseModel):
     expire: datetime = None
     name: str = None
 
