@@ -22,6 +22,9 @@ pipenv install
 # You'll want to update the .env to point to your redis instance & db
 cp .env.dist .env
 
+# Run migration if you haven't already.
+pipenv run migrate
+
 # Run things and navigate to http://127.0.0.1:8000/doc for the API specs.
 pipenv run serve
 ```

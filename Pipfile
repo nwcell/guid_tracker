@@ -5,6 +5,8 @@ verify_ssl = true
 
 [scripts]
 serve = "uvicorn guid:app --reload"
+migrate = "alembic upgrade head"
+test = "echo test"
 
 [dev-packages]
 pylint = "*"
