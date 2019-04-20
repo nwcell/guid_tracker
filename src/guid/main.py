@@ -6,7 +6,7 @@ from guid.db import (open_database_connection_pool,
                      close_database_connection_pool)
 
 
-app = FastAPI()
+app = FastAPI(title='GUID Tracker', version='0.1.4', docs_url='/')
 
 app.debug = settings.DEBUG
 
