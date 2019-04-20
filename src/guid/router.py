@@ -1,5 +1,5 @@
+"""Router for gathering the views together."""
 from fastapi import APIRouter
-
 from guid import views
 
 

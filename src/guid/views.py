@@ -1,33 +1,44 @@
+"""API views."""
 import uuid
-from typing import Dict, Type
-from datetime import datetime
-
+from typing import Type, List
+from datetime import datetime, timezone
 from fastapi import APIRouter, HTTPException
-
-from guid.util import validate_guid, default_expire
-from guid.db import guid_tracker, database
+from sqlalchemy import and_
+from guid.db import (guid_tracker, database, create_guid_record,
+                     update_guid_record, retrieve_guid_record,
+                     delete_guid_record)
 from guid.serializers import GuidIn, GuidUpdate, GuidOut
 from guid.util import validate_guid
-# from .main import cache
+from guid.cache import cache
 
 
 router = APIRouter()
 
 
 @router.get('/')
-async def list_guid():
+async def list_guid() -> List[dict]:
+    """
+    Lists everything.
+
+    I added this for my own convenience during dev.
+    """
     query = guid_tracker.select()
     results = await database.fetch_all(query)
     return results
 
 
 @router.get('/{guid}', response_model=GuidOut)
-async def read_guid(guid: str):
-    # TODO: Add Cache
-    # cache.set('foo', 'bar')
-    # cached_data = cache.get(guid)
-    query = guid_tracker.select().where(guid_tracker.c.id == guid)
-    results = await database.fetch_one(query)
+async def retrieve_guid(guid: str):
+    """
+    Retrieves a single record from the DB.
+
+    Checks redis for a non-expired record before doing anything.
+    """
+    cached_data = await cache.get(guid)
+    if cached_data:
+        return cached_data
+
+    results = await retrieve_guid_record(guid)
 
     if not results:
         raise HTTPException(status_code=404, detail="Item not found")
@@ -41,86 +52,109 @@ async def read_guid(guid: str):
 
 @router.post('/', status_code=201, response_model=GuidOut)
 async def create_guid(data: GuidIn) -> Type[GuidOut]:
+    """
+    Create a record w/o specifying a guid.
+
+    Also cleans up expired records & caches the new record.
+    """
     guid = uuid.uuid4().hex
     validated = data.dict()
 
-    query = guid_tracker.insert().values(
-        id=guid,
-        expire=validated['expire'],
-        name=validated['name'],
-    )
-
     try:
-        await database.execute(query)
+        await create_guid_record(guid, validated['name'], validated['expire'])
     except Exception as detail:
         raise HTTPException(status_code=400, detail=f'{detail}')
 
-    return GuidOut(
+    # Build serialized response
+    out = GuidOut(
         id=guid,
         expire=validated['expire'],
         name=validated['name'],
     )
+
+    # Cache stuff
+    ttl = validated['expire'] - datetime.now(timezone.utc)
+    await cache.set(guid, out, ttl=ttl.seconds)
+
+    return out
 
 
 @router.post('/{guid}', status_code=201, response_model=GuidOut)
 async def create_specific_guid(guid: str, data: GuidIn):
-    guid = validate_guid(guid)
+    """
+    Create a record w/ a guid specified in the path.
+
+    Also cleans up expired records & caches the new record.
+
+    Raises an exception if you try to overwrite an existing record.
+    """
+    try:
+        guid = validate_guid(guid)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid guid")
+
     validated = data.dict()
 
-    query = guid_tracker.insert().values(
-        id=guid,
-        expire=validated['expire'],
-        name=validated['name'],
-    )
-
     try:
-        await database.execute(query)
+        await create_guid_record(guid, validated['name'], validated['expire'])
     except Exception as detail:
         raise HTTPException(status_code=400, detail=f'{detail}')
 
-    return GuidOut(
+    # Build serialized response
+    out = GuidOut(
         id=guid,
         expire=validated['expire'],
         name=validated['name'],
     )
+
+    # Cache stuff
+    ttl = validated['expire'] - datetime.now(timezone.utc)
+    await cache.set(guid, out, ttl=ttl.seconds)
+
+    return out
 
 
 @router.patch('/{guid}', response_model=GuidOut)
 async def update_guid(guid: str, data: GuidUpdate):
+    """
+    Updates a record.
+
+    Also cleans up expired records & caches the updated record.
+    """
     validated = data.dict()
 
-    update = {}
-    if validated['expire']:
-        update['expire'] = validated['expire']
-    if validated['name']:
-        update['name'] = validated['name']
-
-    query = guid_tracker.update().values(
-        **update,
-    ).where(
-        guid_tracker.c.id == guid
-    )
-    await database.execute(query)
-
-    # Get updated record
-    query = guid_tracker.select().where(guid_tracker.c.id == guid)
-    results = await database.fetch_one(query)
+    try:
+        results = await update_guid_record(guid, validated['name'], validated['expire'])
+    except Exception as detail:
+        raise HTTPException(status_code=400, detail=f'{detail}')
 
     if not results:
         raise HTTPException(status_code=404, detail="Item not found")
 
-    return GuidOut(
+    # Build serialized response
+    out = GuidOut(
         id=results.id,
         expire=results.expire,
         name=results.name,
     )
 
+    # Cache stuff
+    ttl = results.expire - datetime.now()
+    await cache.set(guid, out, ttl=ttl.seconds)
+
+    return out
+
 
 @router.delete('/{guid}')
 async def destroy_guid(guid: str):
-    query = guid_tracker.delete().where(guid_tracker.c.id == guid)
+    """
+    Removes a record.
 
+    Also removes the related cached record.
+    """
     try:
-        await database.execute(query)
+        await delete_guid_record(guid)
     except Exception as detail:
         raise HTTPException(status_code=400, detail=f'{detail}')
+
+    await cache.delete(guid)

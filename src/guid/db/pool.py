@@ -1,3 +1,7 @@
+"""Initialize the DB pool.
+
+Use the `database` attribute as your interface to the db.
+"""
 import databases
 from guid import settings
 

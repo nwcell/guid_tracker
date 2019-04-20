@@ -1,15 +1,10 @@
+"""The main app is here."""
 from fastapi import FastAPI
-
 from .router import api_router
 from guid import settings
 from guid.db import (open_database_connection_pool,
                      close_database_connection_pool)
 
-
-# Setup app
-# import redis
-# from guid import settings
-# cache = redis.Redis.from_url(url=settings.REDIS_URL)
 
 app = FastAPI()
 

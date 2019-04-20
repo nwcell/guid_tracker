@@ -1,9 +1,6 @@
+"""Define tables."""
 from datetime import datetime, timedelta
 import sqlalchemy
-
-
-def _default_expire():
-    return datetime.now() + timedelta(days=30)
 
 
 # Database table definitions.

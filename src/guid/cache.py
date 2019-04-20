@@ -1,22 +1,28 @@
-# import asyncio
-import aioredis
+"""Creates a cache instance w/ redis as a backend.
 
-from starlette.applications import Starlette
-from starlette.config import Config
+Use `cache` to interact with the cache.
+
+Objects are pickled before getting sent into redis.
+"""
+from aiocache import caches
+from guid import settings
 
 
-config = Config('.env')
-REDIS_URL = config('REDIS_URL')
+redis_config = {
+    'default': {
+        'cache': "aiocache.RedisCache",
+        'endpoint': settings.REDIS_ENDPOINT,
+        'port': settings.REDIS_PORT,
+        'db': settings.REDIS_DB,
+        'serializer': {
+            'class': "aiocache.serializers.PickleSerializer"
+        }
+    },
+}
 
+if settings.REDIS_PASSWORD:
+    redis_config['default']['password'] = str(settings.REDIS_PASSWORD)
 
-async def get(key: str):
-    # Redis client bound to single connection (no auto reconnection).
-    redis = await aioredis.create_redis(REDIS_URL)
+caches.set_config(redis_config)
 
-    await redis.set('key', 'yay')
-    val = await redis.get(key)
-    yield val
-
-    # gracefully closing underlying connection
-    redis.close()
-    await redis.wait_closed()
+cache = caches.get('default')

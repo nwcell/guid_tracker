@@ -19,6 +19,8 @@ redis = "*"
 aiosqlite = "*"
 databases = "*"
 alembic = "*"
+aioredis = "*"
+aiocache = "*"
 
 [requires]
 python_version = "3.7"
