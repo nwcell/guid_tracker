@@ -41,7 +41,7 @@ async def retrieve_guid(guid: str):
     results = await retrieve_guid_record(guid)
 
     if not results:
-        raise HTTPException(status_code=404, detail="Item not found")
+        raise HTTPException(status_code=404, detail='Item not found')
 
     return GuidOut(
         id=results.id,

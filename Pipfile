@@ -6,12 +6,15 @@ verify_ssl = true
 [scripts]
 serve = "uvicorn guid:app --reload"
 migrate = "alembic upgrade head"
-test = "echo test"
+test = "pytest"
 
 [dev-packages]
 pylint = "*"
 autopep8 = "*"
 rope = "*"
+pytest = "*"
+requests = "*"
+sqlalchemy-utils = "*"
 
 [packages]
 starlette = "*"
@@ -23,6 +26,9 @@ databases = "*"
 alembic = "*"
 aioredis = "*"
 aiocache = "*"
+email-validator = "*"
+ujson = "*"
+msgpack = "*"
 
 [requires]
 python_version = "3.7"

@@ -30,7 +30,7 @@ pipenv run serve
 ```
 
 ## Test
-To run tests, you'll need to
+The tests are integration tests.  They use sqlite for the db & a memory cache (instead of redis) for the cache.
 ```
 pipenv install -d
 pipenv run test
