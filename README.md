@@ -3,7 +3,7 @@ This is an API for storing data by GUID.  It stores the data in a relational DB 
 
 I chose to go with a new framework, [FastAPI](https://fastapi.tiangolo.com) (which builds off of [Starlette](https://www.starlette.io)), which is a fully asyncronous framework that leverages python's new typehints for generating Swagger documentation.
 
-![Generated docs](docs/swagger.png?raw=true "Logo Title Text 1")
+![Generated docs](docs/swagger.png?raw=true "Swagger")
 
 ## Run
 First, you'll want to clone the repo.  The codebase is using pipenv, so go install w/ pipenv.  In pipenv, we're using a custom command `serve`.
